@@ -10,7 +10,7 @@
                     "ErrorEquals": [
                         "CustomError"
                     ],
-                    "Next": "CustomErrorFallback"
+                    "Next": "ReservedTypeFallback"
                 },
                 {
                     "ErrorEquals": [
@@ -27,11 +27,7 @@
             ],
             "End": true
         },
-        "CustomErrorFallback": {
-            "Type": "Pass",
-            "Result": "This is a fallback from a custom lambda function exception",
-            "End": true
-        },
+       
         "ReservedTypeFallback": {
             "Type": "Pass",
             "Result": "This is a fallback from a reserved error code",

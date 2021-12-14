@@ -1,62 +1,59 @@
 "use strict";
 const AWS = require("aws-sdk");
+const step_function = require("./testStep.json");
+AWS.config.update({ region: "us-east-2" });
 
 let stepFunctions = new AWS.StepFunctions();
 
-var params = {
-  name: "testingStepFunction",
-  roleArn: "arn:aws:iam::175437885081:user/pulasthi-int",
-};
-
-var paramsUpdate = {
-  stateMachineArn: null,
-  definition: "",
-  loggingConfiguration: {
-    destinations: [
-      {
-        cloudWatchLogsLogGroup: {
-          logGroupArn: "",
-        },
-      },
-    ],
-    includeExecutionData: true,
-  },
-  roleArn: "arn:aws:iam::175437885081:user/pulasthi-int",
-  tracingConfiguration: {
-    enabled: true,
-  },
-};
-
-var paramsList = {
-  maxResults: "900",
-  // nextToken: "STRING_VALUE",
-};
-
-stepFunctions.listStateMachines(paramsList, function (err, data) {
-  if (err) console.log(err, err.stack);
-  // an error occurred
-  else {
-    console.log(data);
-    if (data.name === params.name) {
-      paramsUpdate.stateMachineArn = data.stateMachineArn;
-    }
-  } // successful response
-});
-
-stepFunctions.createStateMachine(params, function (err, data) {
-  if (err) {
-    console.log(err, err.stack);
-    if (err.message === "step function already exist") {
-      stepFunctions.updateStateMachine(
-        paramsUpdate,
-        function (err, dataUpdate) {
-          if (err) {
-            console.log(err, err.stack); // get the error if update failed
-          } else {
-            console.log("Update Successful", dataUpdate);
-          }
-        }
+const listStepFunctions = async (stepFunctionName) => {
+  var paramsList = {
+    maxResults: "900",
+    // nextToken: "STRING_VALUE",
+  };
+  try {
+    const listRes = await stepFunctions.listStateMachines(paramsList).promise();
+    // console.log(listRes);
+    if (listRes.stateMachines.length) {
+      return listRes.stateMachines.find(
+        (item) => item.name === stepFunctionName
       );
     }
-  } else console.log(data); // successful response
-});
+  } catch (error) {}
+  return null;
+};
+
+const createStepFunction = async () => {
+  let params = {
+    name: "testingStepFunction",
+    roleArn: "arn:aws:iam::175437885081:role/Administrator",
+    definition: JSON.stringify(step_function),
+  };
+
+  try {
+    const createRes = await stepFunctions.createStateMachine(params).promise();
+    return createRes;
+  } catch (error) {
+    if (error) {
+      const listResARN = await listStepFunctions(params.name);
+      if (listResARN && listResARN.stateMachineArn) {
+        let paramsUpdate = {
+          stateMachineArn: listResARN.stateMachineArn,
+          definition: JSON.stringify(step_function),
+          loggingConfiguration: {
+            includeExecutionData: true,
+          },
+          roleArn: "arn:aws:iam::175437885081:role/Administrator",
+        };
+
+        const updateRes = await stepFunctions
+          .updateStateMachine(paramsUpdate)
+          .promise();
+
+        return updateRes;
+      }
+    }
+    return error;
+  }
+};
+
+createStepFunction();

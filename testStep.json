@@ -1,16 +1,16 @@
 {
     "Comment": "A Catch example of the Amazon States Language using an AWS Lambda Function",
-    "StartAt": "checkInventory",
+    "StartAt": "check",
     "States": {
-        "checkInventory": {
+        "check": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME",
+            "Resource": "arn:aws:lambda:us-east-2:175437885081:function:checkInventory",
             "Catch": [
                 {
                     "ErrorEquals": [
-                        "CustomError"
+                        "BookError"
                     ],
-                    "Next": "CustomErrorFallback"
+                    "Next": "ErrorFallback"
                 },
                 {
                     "ErrorEquals": [
@@ -27,7 +27,7 @@
             ],
             "End": true
         },
-        "CustomErrorFallback": {
+        "ErrorFallback": {
             "Type": "Pass",
             "Result": "This is a fallback from a custom lambda function exception",
             "End": true
